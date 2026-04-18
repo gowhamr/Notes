@@ -31,12 +31,12 @@ export function TasksList() {
   const done   = tasks.filter(t => t.done);
 
   return (
-    <div className="flex flex-col h-full bg-black">
+    <div className="flex flex-col h-full" style={{ background: 'var(--bg)' }}>
 
       {/* Header */}
       <div className="flex items-center px-4 pt-12 pb-3 shrink-0">
         <div className="flex-1" />
-        <h1 className="text-lg font-semibold text-white tracking-tight">Tasks</h1>
+        <h1 className="text-lg font-semibold tracking-tight" style={{ color: 'var(--text-1)' }}>Tasks</h1>
         <div className="flex-1 flex justify-end">
           <button
             onClick={() => dispatch({ type: 'SET_VIEW', payload: 'settings' })}
@@ -56,7 +56,8 @@ export function TasksList() {
             onChange={e => setInput(e.target.value)}
             onKeyDown={e => e.key === 'Enter' && addTask()}
             placeholder="Add a task..."
-            className="flex-1 bg-transparent text-white placeholder-neutral-600 text-sm outline-none"
+            className="flex-1 bg-transparent text-sm outline-none"
+            style={{ color: 'var(--text-1)', caretColor: '#f5a623' }}
           />
           <button
             onClick={addTask}

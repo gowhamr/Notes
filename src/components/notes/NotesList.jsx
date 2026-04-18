@@ -18,7 +18,7 @@ export function NotesList() {
   const setTag = (tag) => dispatch({ type: 'SET_TAG', payload: tag });
 
   return (
-    <div className="flex flex-col h-full bg-black">
+    <div className="flex flex-col h-full" style={{ background: 'var(--bg)' }}>
 
       {/* ── Header ── */}
       {searching ? (
@@ -31,7 +31,8 @@ export function NotesList() {
               value={searchQuery}
               onChange={e => dispatch({ type: 'SET_SEARCH', payload: e.target.value })}
               placeholder="Search notes..."
-              className="w-full pl-9 pr-3 py-2.5 rounded-xl bg-neutral-900 border border-neutral-800 text-white placeholder-neutral-600 text-sm outline-none focus:border-neutral-600"
+              className="input-field pl-9"
+              style={{ caretColor: '#f5a623' }}
             />
           </div>
           <button
@@ -50,7 +51,7 @@ export function NotesList() {
           >
             <Archive size={20} />
           </button>
-          <h1 className="flex-1 text-center text-lg font-semibold text-white tracking-tight">
+          <h1 className="flex-1 text-center text-lg font-semibold tracking-tight" style={{ color: 'var(--text-1)' }}>
             Notes
           </h1>
           <div className="flex items-center gap-0.5">

@@ -12,21 +12,19 @@ import { Modal } from '../ui/Modal';
 function Section({ title, children }) {
   return (
     <div className="mb-5">
-      <p className="text-xs font-semibold uppercase tracking-widest text-neutral-600 mb-2 px-1">{title}</p>
-      <div className="bg-neutral-900 rounded-2xl divide-y divide-neutral-800 overflow-hidden">
-        {children}
-      </div>
+      <p className="text-xs font-semibold uppercase tracking-widest mb-2 px-1" style={{ color: 'var(--text-3)' }}>{title}</p>
+      <div className="settings-section">{children}</div>
     </div>
   );
 }
 
 function Row({ icon, label, description, action, danger }) {
   return (
-    <div className={`flex items-center gap-3 px-4 py-3.5 ${danger ? 'text-red-400' : 'text-neutral-200'}`}>
-      <div className={`shrink-0 ${danger ? 'text-red-500' : 'text-neutral-500'}`}>{icon}</div>
+    <div className="settings-row" style={danger ? { color: '#f87171' } : {}}>
+      <div className="shrink-0" style={{ color: danger ? '#ef4444' : 'var(--text-2)' }}>{icon}</div>
       <div className="flex-1 min-w-0">
         <p className="text-sm font-medium">{label}</p>
-        {description && <p className="text-xs text-neutral-600 mt-0.5">{description}</p>}
+        {description && <p className="text-xs mt-0.5" style={{ color: 'var(--text-3)' }}>{description}</p>}
       </div>
       <div className="shrink-0">{action}</div>
     </div>
@@ -78,7 +76,7 @@ export function Settings() {
   const vaultCount = state.notes.filter(n => n.isHidden).length;
 
   return (
-    <div className="flex flex-col h-full bg-black">
+    <div className="flex flex-col h-full" style={{ background: 'var(--bg)' }}>
 
       {/* Header */}
       <div className="flex items-center px-2 pt-12 pb-3 shrink-0">
@@ -91,9 +89,9 @@ export function Settings() {
         {/* Stats */}
         <div className="grid grid-cols-3 gap-2 mb-5">
           {[{ label: 'Notes', value: noteCount }, { label: 'Vault', value: vaultCount }, { label: 'Total', value: noteCount + vaultCount }].map(s => (
-            <div key={s.label} className="bg-neutral-900 rounded-2xl p-4 text-center">
-              <p className="text-2xl font-bold text-white">{s.value}</p>
-              <p className="text-xs text-neutral-500 mt-0.5">{s.label}</p>
+            <div key={s.label} className="rounded-2xl p-4 text-center" style={{ background: 'var(--bg-card)', border: '1px solid var(--border)' }}>
+              <p className="text-2xl font-bold" style={{ color: 'var(--text-1)' }}>{s.value}</p>
+              <p className="text-xs mt-0.5" style={{ color: 'var(--text-2)' }}>{s.label}</p>
             </div>
           ))}
         </div>
@@ -102,14 +100,11 @@ export function Settings() {
           <Row
             icon={state.theme === 'dark' ? <Moon size={16} /> : <Sun size={16} />}
             label="Theme"
-            description={state.theme === 'dark' ? 'Dark mode' : 'Light mode'}
+            description="Follows your system dark/light setting"
             action={
-              <button
-                onClick={toggleTheme}
-                className={`relative w-11 h-6 rounded-full transition-colors ${state.theme === 'dark' ? 'bg-amber-400' : 'bg-neutral-600'}`}
-              >
-                <span className={`absolute top-0.5 w-5 h-5 rounded-full bg-white shadow transition-transform ${state.theme === 'dark' ? 'translate-x-5' : 'translate-x-0.5'}`} />
-              </button>
+              <span className="text-xs px-2.5 py-1 rounded-lg" style={{ background: 'var(--bg-input)', color: 'var(--text-2)' }}>
+                {state.theme === 'dark' ? 'Dark' : 'Light'}
+              </span>
             }
           />
         </Section>

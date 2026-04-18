@@ -45,18 +45,26 @@ function reducer(state, action) {
 export function AppProvider({ children }) {
   const [state, dispatch] = useReducer(reducer, initialState);
 
-  // Boot
+  // Boot — load vault PIN, notes; theme is driven by system
   useEffect(() => {
     (async () => {
-      const theme = await getSetting('theme', 'dark');
       const vaultPin = await getSetting('vaultPin', null);
-      dispatch({ type: 'SET_THEME', payload: theme });
       dispatch({ type: 'SET_VAULT_PIN', payload: vaultPin });
       await refreshNotes();
     })();
   }, []);
 
-  // Apply theme class
+  // Auto dark/light — follow OS preference
+  useEffect(() => {
+    const mq = window.matchMedia('(prefers-color-scheme: dark)');
+    const apply = (dark) => dispatch({ type: 'SET_THEME', payload: dark ? 'dark' : 'light' });
+    apply(mq.matches);
+    const handler = (e) => apply(e.matches);
+    mq.addEventListener('change', handler);
+    return () => mq.removeEventListener('change', handler);
+  }, []);
+
+  // Apply theme class to <html>
   useEffect(() => {
     document.documentElement.classList.toggle('dark', state.theme === 'dark');
     document.documentElement.classList.toggle('light', state.theme === 'light');

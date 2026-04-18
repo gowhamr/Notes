@@ -21,7 +21,7 @@ function AppShell() {
   const showFAB  = showList && bottomTab === 'notes';
 
   return (
-    <div className="relative flex flex-col h-screen max-w-2xl mx-auto bg-black overflow-hidden">
+    <div className="relative flex flex-col h-screen max-w-2xl mx-auto overflow-hidden" style={{ background: 'var(--bg)' }}>
 
       {/* ── Main content ── */}
       <div className="flex-1 overflow-hidden">

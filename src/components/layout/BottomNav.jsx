@@ -14,22 +14,27 @@ export function BottomNav() {
   const isSettings = view === 'settings';
 
   return (
-    <nav className="shrink-0 flex items-center border-t border-neutral-800 bg-neutral-950 pb-safe">
-      <button
-        className={`nav-tab ${bottomTab === 'notes' && !isSettings ? 'text-white' : 'text-neutral-600'}`}
-        onClick={() => setTab('notes')}
-      >
-        <FileText size={22} strokeWidth={bottomTab === 'notes' && !isSettings ? 2 : 1.5} />
-        <span className="text-[11px] font-medium">Notes</span>
-      </button>
-
-      <button
-        className={`nav-tab ${bottomTab === 'tasks' && !isSettings ? 'text-white' : 'text-neutral-600'}`}
-        onClick={() => setTab('tasks')}
-      >
-        <CheckSquare size={22} strokeWidth={bottomTab === 'tasks' && !isSettings ? 2 : 1.5} />
-        <span className="text-[11px] font-medium">Tasks</span>
-      </button>
+    <nav
+      className="shrink-0 flex items-center border-t"
+      style={{ background: 'var(--bg-nav)', borderColor: 'var(--border)' }}
+    >
+      {[
+        { key: 'notes', Icon: FileText, label: 'Notes' },
+        { key: 'tasks', Icon: CheckSquare, label: 'Tasks' },
+      ].map(({ key, Icon, label }) => {
+        const active = bottomTab === key && !isSettings;
+        return (
+          <button
+            key={key}
+            onClick={() => setTab(key)}
+            className="nav-tab transition-colors"
+            style={{ color: active ? 'var(--text-1)' : 'var(--text-3)' }}
+          >
+            <Icon size={22} strokeWidth={active ? 2 : 1.5} />
+            <span className="text-[11px] font-medium">{label}</span>
+          </button>
+        );
+      })}
     </nav>
   );
 }

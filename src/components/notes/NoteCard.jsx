@@ -68,8 +68,8 @@ export function NoteCard({ note }) {
       >
         {/* Title row */}
         <div className="flex items-start justify-between gap-2 mb-1">
-          <h3 className="font-semibold text-white text-[15px] leading-snug truncate flex-1">
-            {note.title || <span className="text-neutral-600 font-normal">Untitled</span>}
+          <h3 className="font-semibold text-[15px] leading-snug truncate flex-1" style={{ color: 'var(--text-1)' }}>
+            {note.title || <span style={{ color: 'var(--text-3)', fontWeight: 400 }}>Untitled</span>}
           </h3>
           <button
             onClick={e => { e.stopPropagation(); onContextMenu(e); }}
@@ -80,13 +80,13 @@ export function NoteCard({ note }) {
         </div>
 
         {/* Preview */}
-        <p className="text-neutral-500 text-[13px] leading-snug line-clamp-1 mb-2.5">
-          {preview || <span className="italic">No text</span>}
+        <p className="text-[13px] leading-snug line-clamp-1 mb-2.5" style={{ color: 'var(--text-2)' }}>
+          {preview || <span className="italic" style={{ color: 'var(--text-3)' }}>No text</span>}
         </p>
 
         {/* Footer: date + pin */}
         <div className="flex items-center justify-between gap-2">
-          <span className="text-neutral-600 text-[12px]">{dateStr}</span>
+          <span className="text-[12px]" style={{ color: 'var(--text-3)' }}>{dateStr}</span>
           <div className="flex items-center gap-1.5">
             {(note.tags || []).slice(0, 2).map(t => (
               <span key={t} className="tag-badge">{t}</span>

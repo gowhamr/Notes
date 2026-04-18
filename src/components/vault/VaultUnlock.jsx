@@ -25,7 +25,7 @@ export function VaultUnlock() {
   };
 
   return (
-    <div className="flex flex-col h-full bg-black">
+    <div className="flex flex-col h-full" style={{ background: 'var(--bg)' }}>
       {/* Back */}
       <div className="px-2 pt-12 pb-4 shrink-0">
         <button onClick={() => dispatch({ type: 'SET_VIEW', payload: 'list' })} className="btn-icon">
