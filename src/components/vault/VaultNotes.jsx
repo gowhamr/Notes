@@ -1,13 +1,13 @@
 import { useState, useEffect } from 'react';
 import { format } from 'date-fns';
-import { Shield, Lock, Trash2, ArchiveRestore, Plus, PenSquare } from 'lucide-react';
+import { Shield, Lock, Trash2, ArchiveRestore, Plus, ArrowLeft, Check } from 'lucide-react';
 import { useApp } from '../../context/AppContext';
 import { useToast } from '../ui/Toast';
 import { useInactivityLock } from '../../hooks/useInactivityLock';
 import { getVaultNotes, saveNote, deleteNote } from '../../modules/storage';
 
 export function VaultNotes() {
-  const { lockVault, retrieveFromVault, dispatch, state } = useApp();
+  const { lockVault, retrieveFromVault, dispatch } = useApp();
   const toast = useToast();
   const [vaultNotes, setVaultNotes] = useState([]);
   const [selected, setSelected] = useState(null);
@@ -31,8 +31,7 @@ export function VaultNotes() {
     });
     await loadVaultNotes();
     setSelected({ id, title: '', content: '', tags: [], isHidden: 1 });
-    setEditTitle('');
-    setEditContent('');
+    setEditTitle(''); setEditContent('');
   };
 
   const saveVaultNote = async () => {
@@ -62,102 +61,146 @@ export function VaultNotes() {
     toast('Deleted', 'info');
   };
 
+  const backToList = () => dispatch({ type: 'SET_VIEW', payload: 'list' });
+
+  // ── Vault Note Editor ────────────────────────────────────────────────────────
   if (selected) {
     return (
-      <div className="flex flex-col h-full">
-        <div className="flex items-center gap-2 px-4 py-3 border-b border-purple-100 dark:border-purple-800/30 bg-purple-50 dark:bg-purple-900/10 shrink-0">
-          <button onClick={() => setSelected(null)} className="p-1.5 rounded-lg hover:bg-purple-100 dark:hover:bg-purple-900/30 text-purple-600 transition-colors text-sm flex items-center gap-1">
-            ← Back
+      <div className="flex flex-col h-full" style={{ background: 'var(--bg)' }}>
+        {/* Top bar */}
+        <div className="flex items-center justify-between px-2 pt-12 pb-2 shrink-0">
+          <button
+            onClick={() => setSelected(null)}
+            className="btn-icon"
+            title="Back"
+          >
+            <ArrowLeft size={22} />
           </button>
-          <div className="flex items-center gap-1.5 ml-2">
-            <Shield size={14} className="text-purple-500" />
-            <span className="text-xs font-medium text-purple-600 dark:text-purple-400">Vault Note</span>
+          <div className="flex items-center gap-1.5">
+            <Shield size={14} className="text-purple-400" />
+            <span className="text-xs font-medium" style={{ color: 'var(--text-2)' }}>Vault Note</span>
           </div>
-          <button onClick={saveVaultNote} className="btn-vault ml-auto">Save</button>
+          <button onClick={saveVaultNote} className="btn-icon !text-amber-400 hover:!text-amber-300" title="Save">
+            <Check size={22} strokeWidth={2.5} />
+          </button>
         </div>
-        <input
-          value={editTitle}
-          onChange={e => setEditTitle(e.target.value)}
-          placeholder="Title..."
-          className="px-6 pt-5 pb-2 text-xl font-semibold bg-transparent border-none outline-none text-gray-900 dark:text-gray-100 placeholder-gray-300 dark:placeholder-gray-600"
-        />
+
+        {/* Title */}
+        <div className="px-5 pt-2 pb-3 shrink-0">
+          <input
+            value={editTitle}
+            onChange={e => setEditTitle(e.target.value)}
+            placeholder="Title"
+            className="w-full text-[22px] font-bold bg-transparent border-none outline-none leading-tight"
+            style={{ color: 'var(--text-1)', caretColor: '#f5a623' }}
+          />
+        </div>
+
+        {/* Content */}
         <textarea
           value={editContent}
           onChange={e => setEditContent(e.target.value)}
-          placeholder="Write your private note..."
-          className="flex-1 px-6 py-2 bg-transparent border-none outline-none text-gray-700 dark:text-gray-300 resize-none text-sm leading-relaxed placeholder-gray-300 dark:placeholder-gray-600"
+          placeholder="Write your private note…"
+          className="flex-1 px-5 py-2 bg-transparent border-none outline-none resize-none text-[15px] leading-relaxed"
+          style={{ color: 'var(--text-1)', caretColor: '#f5a623' }}
         />
       </div>
     );
   }
 
+  // ── Vault List ────────────────────────────────────────────────────────────────
   return (
-    <div className="flex flex-col h-full">
-      {/* Header */}
-      <div className="flex items-center gap-3 px-4 py-3 border-b border-purple-100 dark:border-purple-800/30 bg-gradient-to-r from-purple-50 to-white dark:from-purple-900/10 dark:to-gray-900 shrink-0">
-        <div className="w-8 h-8 rounded-xl bg-gradient-to-br from-purple-500 to-purple-700 flex items-center justify-center">
-          <Shield size={15} className="text-white" />
+    <div className="flex flex-col h-full" style={{ background: 'var(--bg)' }}>
+
+      {/* Top bar with BACK button */}
+      <div className="flex items-center justify-between px-2 pt-12 pb-2 shrink-0">
+        <button onClick={backToList} className="btn-icon" title="Back to Notes">
+          <ArrowLeft size={22} />
+        </button>
+
+        <div className="flex items-center gap-1.5">
+          <Shield size={15} className="text-purple-400" />
+          <span className="text-base font-semibold" style={{ color: 'var(--text-1)' }}>Hidden Vault</span>
         </div>
-        <div>
-          <h2 className="text-sm font-semibold text-gray-900 dark:text-gray-100">Hidden Vault</h2>
-          <p className="text-[10px] text-purple-500 dark:text-purple-400">AES-256 Encrypted • Auto-locks in 5 min</p>
-        </div>
-        <div className="ml-auto flex gap-2">
-          <button onClick={createVaultNote} className="btn-vault">
-            <Plus size={14} /> New
+
+        <div className="flex items-center gap-1">
+          <button onClick={createVaultNote} className="btn-icon !text-amber-400" title="New vault note">
+            <Plus size={22} />
           </button>
-          <button onClick={lockVault} className="btn-secondary text-purple-600 dark:text-purple-400 border-purple-200 dark:border-purple-700">
-            <Lock size={14} /> Lock
+          <button onClick={lockVault} className="btn-icon !text-purple-400" title="Lock vault">
+            <Lock size={20} />
           </button>
         </div>
       </div>
 
+      {/* Encrypted badge */}
+      <div className="px-5 pb-3 shrink-0">
+        <p className="text-[11px]" style={{ color: 'var(--text-3)' }}>
+          AES-256 Encrypted • Auto-locks after 5 min inactivity
+        </p>
+      </div>
+
       {/* Notes list */}
-      <div className="flex-1 overflow-y-auto p-3 space-y-2">
+      <div className="flex-1 overflow-y-auto px-3 pb-6 space-y-2">
         {vaultNotes.length === 0 ? (
-          <div className="flex flex-col items-center justify-center h-48 gap-3 text-center">
-            <div className="w-14 h-14 rounded-2xl bg-purple-50 dark:bg-purple-900/20 flex items-center justify-center">
-              <Shield size={24} className="text-purple-400" />
+          <div className="flex flex-col items-center justify-center h-56 gap-3 text-center">
+            <div
+              className="w-16 h-16 rounded-3xl flex items-center justify-center"
+              style={{ background: 'color-mix(in srgb, #9333ea 15%, var(--bg-card))' }}
+            >
+              <Shield size={28} className="text-purple-400" />
             </div>
             <div>
-              <p className="text-sm font-medium text-gray-600 dark:text-gray-400">Vault is empty</p>
-              <p className="text-xs text-gray-400 mt-1">Move sensitive notes here for extra protection</p>
+              <p className="text-sm font-medium" style={{ color: 'var(--text-2)' }}>Vault is empty</p>
+              <p className="text-xs mt-1" style={{ color: 'var(--text-3)' }}>
+                Move sensitive notes here for extra protection
+              </p>
             </div>
             <button onClick={createVaultNote} className="btn-vault mt-2">
-              <PenSquare size={14} /> Create Vault Note
+              <Plus size={14} /> Create Vault Note
             </button>
           </div>
         ) : (
           vaultNotes.map(note => (
             <div
               key={note.id}
-              className="bg-purple-50 dark:bg-purple-900/10 border border-purple-100 dark:border-purple-800/30 rounded-xl p-4 cursor-pointer hover:border-purple-300 dark:hover:border-purple-700 transition-all group"
+              className="rounded-2xl p-4 cursor-pointer transition-all group border"
+              style={{
+                background: 'color-mix(in srgb, #9333ea 8%, var(--bg-card))',
+                borderColor: 'color-mix(in srgb, #9333ea 20%, var(--border))',
+              }}
               onClick={() => openNote(note)}
             >
               <div className="flex items-start justify-between gap-2">
-                <div className="min-w-0">
-                  <p className="text-sm font-medium text-gray-800 dark:text-gray-200 truncate">
-                    {note.title || <span className="text-gray-400 italic">Untitled</span>}
+                <div className="min-w-0 flex-1">
+                  <p className="text-sm font-semibold truncate" style={{ color: 'var(--text-1)' }}>
+                    {note.title || <span style={{ color: 'var(--text-3)', fontWeight: 400 }}>Untitled</span>}
                   </p>
-                  <p className="text-xs text-gray-500 dark:text-gray-400 mt-0.5 line-clamp-1">
-                    {(note.content || '').slice(0, 80) || <span className="italic">Empty note</span>}
+                  <p className="text-xs mt-0.5 line-clamp-1" style={{ color: 'var(--text-2)' }}>
+                    {(note.content || '').slice(0, 80) || <span style={{ color: 'var(--text-3)' }}>Empty note</span>}
                   </p>
-                  <p className="text-[10px] text-purple-400 mt-1.5">{format(note.updatedAt, 'MMM d, yyyy')}</p>
+                  <p className="text-[11px] mt-1.5 text-purple-400">
+                    {format(note.updatedAt, 'MMM d, yyyy')}
+                  </p>
                 </div>
-                <div className="flex gap-1 opacity-0 group-hover:opacity-100 transition-opacity shrink-0" onClick={e => e.stopPropagation()}>
+                <div
+                  className="flex gap-1 opacity-0 group-hover:opacity-100 transition-opacity shrink-0"
+                  onClick={e => e.stopPropagation()}
+                >
                   <button
                     onClick={() => restore(note)}
-                    title="Move to notes"
-                    className="p-1.5 rounded-lg hover:bg-blue-50 dark:hover:bg-blue-900/20 text-blue-500 transition-colors"
+                    className="p-1.5 rounded-lg transition-colors"
+                    style={{ color: 'var(--text-2)' }}
+                    title="Restore to notes"
                   >
-                    <ArchiveRestore size={13} />
+                    <ArchiveRestore size={14} />
                   </button>
                   <button
                     onClick={() => remove(note.id)}
+                    className="p-1.5 rounded-lg text-red-400 transition-colors"
                     title="Delete"
-                    className="p-1.5 rounded-lg hover:bg-red-50 dark:hover:bg-red-900/20 text-red-500 transition-colors"
                   >
-                    <Trash2 size={13} />
+                    <Trash2 size={14} />
                   </button>
                 </div>
               </div>

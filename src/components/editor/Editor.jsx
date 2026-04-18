@@ -1,8 +1,8 @@
 import { useState, useCallback, useEffect, useRef } from 'react';
 import { format } from 'date-fns';
 import {
-  ArrowLeft, Undo2, Redo2, Check, MoreHorizontal,
-  Pin, Archive, Lock, Trash2, Download,
+  ArrowLeft, Undo2, Redo2, Check, MoreVertical,
+  Pin, Archive, Lock, Trash2, Download, Share2,
 } from 'lucide-react';
 import { useApp } from '../../context/AppContext';
 import { useToast } from '../ui/Toast';
@@ -110,42 +110,61 @@ export function Editor() {
 
       {/* ── Top bar ── */}
       <div className="flex items-center justify-between px-2 pt-12 pb-1 shrink-0">
-        <button onClick={back} className="btn-icon" title="Back">
-          <ArrowLeft size={22} />
+        {/* Left: always-visible back button */}
+        <button
+          onClick={back}
+          className="btn-icon"
+          title="Back"
+        >
+          <ArrowLeft size={24} />
         </button>
 
+        {/* Right: changes per mode */}
         <div className="flex items-center gap-0.5">
-          <button onClick={undo} className="btn-icon" title="Undo"><Undo2 size={20} /></button>
-          <button onClick={redo} className="btn-icon" title="Redo"><Redo2 size={20} /></button>
+          {tab === 'markdown' && (
+            <>
+              <button onClick={undo} className="btn-icon" title="Undo"><Undo2 size={20} /></button>
+              <button onClick={redo} className="btn-icon" title="Redo"><Redo2 size={20} /></button>
+              <button onClick={handleSave} className="btn-icon !text-amber-400 hover:!text-amber-300" title="Save">
+                <Check size={22} strokeWidth={2.5} />
+              </button>
+            </>
+          )}
 
-          {/* More menu */}
-          <div className="relative">
+          {tab === 'normal' && (
             <button
-              onClick={() => setShowMore(s => !s)}
+              onClick={() => { exportNoteAsMarkdown({ ...note, title, content }); toast('Exported', 'success'); }}
               className="btn-icon"
-              title="More"
+              title="Share / Export"
             >
-              <MoreHorizontal size={20} />
+              <Share2 size={20} />
+            </button>
+          )}
+
+          {/* More menu — always visible */}
+          <div className="relative">
+            <button onClick={() => setShowMore(s => !s)} className="btn-icon" title="More">
+              <MoreVertical size={20} />
             </button>
             {showMore && (
               <div
-                className="absolute right-0 top-full mt-1 rounded-2xl border shadow-2xl z-50 overflow-hidden min-w-44 animate-scale-in"
+                className="absolute right-0 top-full mt-1 rounded-2xl border shadow-2xl z-50 overflow-hidden min-w-48 animate-scale-in"
                 style={{ background: 'var(--bg-card)', borderColor: 'var(--border)' }}
               >
                 {[
-                  { icon: <Pin size={15} />, label: note.isPinned ? 'Unpin' : 'Pin', action: () => { togglePin(note.id, note.isPinned); toast(note.isPinned ? 'Unpinned' : 'Pinned', 'success'); } },
-                  { icon: <Archive size={15} />, label: note.isArchived ? 'Unarchive' : 'Archive', action: () => { toggleArchive(note.id, note.isArchived); toast('Done', 'success'); } },
-                  { icon: <Download size={15} />, label: 'Export .md', action: () => { exportNoteAsMarkdown({ ...note, title, content }); toast('Exported', 'success'); } },
-                  { icon: <Lock size={15} />, label: 'Move to Vault', action: () => { sendToVault({ ...note, title, content, tags }); toast('Moved to vault', 'success'); } },
+                  { icon: <Pin size={15} />,     label: note.isPinned ? 'Unpin' : 'Pin',           action: () => { togglePin(note.id, note.isPinned); toast(note.isPinned ? 'Unpinned' : 'Pinned', 'success'); } },
+                  { icon: <Archive size={15} />, label: note.isArchived ? 'Unarchive' : 'Archive',  action: () => { toggleArchive(note.id, note.isArchived); toast('Done', 'success'); } },
+                  { icon: <Download size={15} />,label: 'Export .md',                               action: () => { exportNoteAsMarkdown({ ...note, title, content }); toast('Exported', 'success'); } },
+                  { icon: <Lock size={15} />,    label: 'Move to Vault',                            action: () => { sendToVault({ ...note, title, content, tags }); toast('Moved to vault', 'success'); } },
                   { sep: true },
-                  { icon: <Trash2 size={15} />, label: 'Delete', danger: true, action: () => { removeNote(note.id); toast('Deleted', 'info'); } },
+                  { icon: <Trash2 size={15} />,  label: 'Delete', danger: true,                    action: () => { removeNote(note.id); toast('Deleted', 'info'); } },
                 ].map((item, i) => item.sep ? (
                   <div key={i} style={{ borderTop: '1px solid var(--border)' }} />
                 ) : (
                   <button
                     key={i}
                     onClick={() => { item.action(); setShowMore(false); }}
-                    className={`w-full flex items-center gap-3 px-4 py-3 text-sm text-left transition-colors ${item.danger ? 'text-red-400' : ''}`}
+                    className={`w-full flex items-center gap-3 px-4 py-3 text-sm text-left ${item.danger ? 'text-red-400' : ''}`}
                     style={!item.danger ? { color: 'var(--text-1)' } : {}}
                     onMouseEnter={e => e.currentTarget.style.background = 'var(--border)'}
                     onMouseLeave={e => e.currentTarget.style.background = ''}
@@ -157,15 +176,6 @@ export function Editor() {
               </div>
             )}
           </div>
-
-          {/* Save / Done ✓ */}
-          <button
-            onClick={handleSave}
-            className="btn-icon !text-amber-400 hover:!text-amber-300"
-            title="Save"
-          >
-            <Check size={22} strokeWidth={2.5} />
-          </button>
         </div>
       </div>
 
