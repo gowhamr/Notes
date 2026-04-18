@@ -1,8 +1,6 @@
 import { useState, useCallback, useEffect, useRef } from 'react';
-import {
-  ArrowLeft, Pin, Archive, Lock, Trash2, Download,
-  Eye, Edit3, Save,
-} from 'lucide-react';
+import { format } from 'date-fns';
+import { ArrowLeft, Undo2, Redo2, Pin, Archive, Lock, Trash2, Download, Eye } from 'lucide-react';
 import { useApp } from '../../context/AppContext';
 import { useToast } from '../ui/Toast';
 import { useAutoSave } from '../../hooks/useAutoSave';
@@ -11,6 +9,43 @@ import { MarkdownToolbar } from './MarkdownToolbar';
 import { MarkdownPreview } from './MarkdownPreview';
 import { exportNoteAsMarkdown } from '../../modules/sync';
 
+// Simple undo/redo stack
+function useHistory(initial) {
+  const [value, setValue] = useState(initial);
+  const history = useRef([initial]);
+  const cursor = useRef(0);
+
+  const set = useCallback((next) => {
+    history.current = history.current.slice(0, cursor.current + 1);
+    history.current.push(next);
+    if (history.current.length > 100) history.current.shift();
+    cursor.current = history.current.length - 1;
+    setValue(next);
+  }, []);
+
+  const undo = useCallback(() => {
+    if (cursor.current > 0) {
+      cursor.current--;
+      setValue(history.current[cursor.current]);
+    }
+  }, []);
+
+  const redo = useCallback(() => {
+    if (cursor.current < history.current.length - 1) {
+      cursor.current++;
+      setValue(history.current[cursor.current]);
+    }
+  }, []);
+
+  const reset = useCallback((val) => {
+    history.current = [val];
+    cursor.current = 0;
+    setValue(val);
+  }, []);
+
+  return [value, set, undo, redo, reset];
+}
+
 export function Editor() {
   const { state, dispatch, updateNote, removeNote, togglePin, toggleArchive, sendToVault } = useApp();
   const toast = useToast();
@@ -18,31 +53,33 @@ export function Editor() {
   const textareaRef = useRef(null);
 
   const [title, setTitle] = useState(note?.title || '');
-  const [content, setContent] = useState(note?.content || '');
+  const [content, setContent, undo, redo, resetContent] = useHistory(note?.content || '');
   const [tags, setTags] = useState(note?.tags || []);
-  const [mode, setMode] = useState('edit');
-  const [saving, setSaving] = useState(false);
+  // Two modes: 'normal' (default) | 'markdown'
+  const [editorMode, setEditorMode] = useState('normal');
+  // Within markdown mode: 'edit' | 'preview'
+  const [preview, setPreview] = useState(false);
 
   useEffect(() => {
     if (note) {
       setTitle(note.title || '');
-      setContent(note.content || '');
+      resetContent(note.content || '');
       setTags(note.tags || []);
-      setMode('edit');
+      setEditorMode('normal');
+      setPreview(false);
     }
   }, [note?.id]);
 
   const save = useCallback(async () => {
     if (!note) return;
-    setSaving(true);
     await updateNote({ ...note, title, content, tags });
-    setSaving(false);
   }, [note, title, content, tags, updateNote]);
 
   useAutoSave({ title, content, tags }, save, 1200);
 
-  // Tab key inserts 2 spaces instead of focus-trap
   const handleKeyDown = (e) => {
+    if ((e.ctrlKey || e.metaKey) && e.key === 'z') { e.preventDefault(); undo(); return; }
+    if ((e.ctrlKey || e.metaKey) && e.key === 'y') { e.preventDefault(); redo(); return; }
     if (e.key === 'Tab') {
       e.preventDefault();
       const el = textareaRef.current;
@@ -53,131 +90,126 @@ export function Editor() {
     }
   };
 
-  const back = () => dispatch({ type: 'SET_ACTIVE', payload: null });
+  const back = () => { save(); dispatch({ type: 'SET_ACTIVE', payload: null }); };
+
+  const charCount = content.length;
+  const ts = note?.updatedAt || note?.createdAt || Date.now();
+  const metaDate = format(ts, 'd MMMM  h:mm aa');
 
   if (!note) return null;
 
   return (
-    <div className="flex flex-col h-full bg-white dark:bg-gray-900">
+    <div className="flex flex-col h-full bg-black">
 
-      {/* Top action bar */}
-      <div className="flex items-center gap-1.5 px-4 py-2.5 border-b border-gray-100 dark:border-gray-800 shrink-0">
-        <button
-          onClick={back}
-          className="p-1.5 rounded-lg hover:bg-gray-100 dark:hover:bg-gray-700 text-gray-500 dark:text-gray-400 transition-colors"
-          title="Back"
-        >
-          <ArrowLeft size={16} />
+      {/* ── Top bar ── */}
+      <div className="flex items-center justify-between px-2 pt-12 pb-2 shrink-0">
+        <button onClick={back} className="btn-icon" title="Back">
+          <ArrowLeft size={22} />
         </button>
 
-        {/* Edit / Preview toggle */}
-        <div className="flex bg-gray-100 dark:bg-gray-800 rounded-lg p-0.5 ml-1">
-          <button
-            onClick={() => { setMode('edit'); requestAnimationFrame(() => textareaRef.current?.focus()); }}
-            className={`flex items-center gap-1.5 px-2.5 py-1 rounded-md text-xs font-medium transition-all ${
-              mode === 'edit'
-                ? 'bg-white dark:bg-gray-700 shadow-sm text-gray-900 dark:text-gray-100'
-                : 'text-gray-500 dark:text-gray-400 hover:text-gray-700 dark:hover:text-gray-200'
-            }`}
-          >
-            <Edit3 size={11} /> Edit
-          </button>
-          <button
-            onClick={() => setMode('preview')}
-            className={`flex items-center gap-1.5 px-2.5 py-1 rounded-md text-xs font-medium transition-all ${
-              mode === 'preview'
-                ? 'bg-white dark:bg-gray-700 shadow-sm text-gray-900 dark:text-gray-100'
-                : 'text-gray-500 dark:text-gray-400 hover:text-gray-700 dark:hover:text-gray-200'
-            }`}
-          >
-            <Eye size={11} /> Preview
-          </button>
-        </div>
-
-        <div className="flex items-center gap-0.5 ml-auto">
-          {saving && <span className="text-[11px] text-gray-400 dark:text-gray-600 mr-1 animate-pulse">Saving…</span>}
-
+        <div className="flex items-center gap-1">
+          <button onClick={undo} className="btn-icon" title="Undo"><Undo2 size={19} /></button>
+          <button onClick={redo} className="btn-icon" title="Redo"><Redo2 size={19} /></button>
           <button
             onClick={() => { togglePin(note.id, note.isPinned); toast(note.isPinned ? 'Unpinned' : 'Pinned', 'success'); }}
-            className={`p-1.5 rounded-lg transition-colors ${note.isPinned ? 'text-yellow-500' : 'text-gray-400 hover:bg-gray-100 dark:hover:bg-gray-700 hover:text-gray-700 dark:hover:text-gray-200'}`}
-            title={note.isPinned ? 'Unpin' : 'Pin'}
+            className={`btn-icon ${note.isPinned ? '!text-amber-400' : ''}`}
+            title="Pin"
           >
-            <Pin size={14} fill={note.isPinned ? 'currentColor' : 'none'} />
+            <Pin size={19} fill={note.isPinned ? 'currentColor' : 'none'} />
           </button>
-
           <button
-            onClick={() => { exportNoteAsMarkdown({ ...note, title, content }); toast('Exported as .md', 'success'); }}
-            className="p-1.5 rounded-lg hover:bg-gray-100 dark:hover:bg-gray-700 text-gray-400 hover:text-gray-700 dark:hover:text-gray-200 transition-colors"
-            title="Download .md"
+            onClick={() => { exportNoteAsMarkdown({ ...note, title, content }); toast('Exported', 'success'); }}
+            className="btn-icon" title="Export .md"
           >
-            <Download size={14} />
+            <Download size={19} />
           </button>
-
           <button
             onClick={() => { sendToVault({ ...note, title, content, tags }); toast('Moved to vault', 'success'); }}
-            className="p-1.5 rounded-lg hover:bg-purple-50 dark:hover:bg-purple-900/20 text-gray-400 hover:text-purple-600 dark:hover:text-purple-400 transition-colors"
-            title="Move to vault"
+            className="btn-icon hover:!text-purple-400" title="Move to vault"
           >
-            <Lock size={14} />
+            <Lock size={19} />
           </button>
-
-          <button
-            onClick={() => { toggleArchive(note.id, note.isArchived); toast(note.isArchived ? 'Unarchived' : 'Archived', 'success'); }}
-            className="p-1.5 rounded-lg hover:bg-gray-100 dark:hover:bg-gray-700 text-gray-400 hover:text-gray-700 dark:hover:text-gray-200 transition-colors"
-            title={note.isArchived ? 'Unarchive' : 'Archive'}
-          >
-            <Archive size={14} />
-          </button>
-
           <button
             onClick={() => { removeNote(note.id); toast('Deleted', 'info'); }}
-            className="p-1.5 rounded-lg hover:bg-red-50 dark:hover:bg-red-900/20 text-gray-400 hover:text-red-500 transition-colors"
-            title="Delete"
+            className="btn-icon hover:!text-red-400" title="Delete"
           >
-            <Trash2 size={14} />
-          </button>
-
-          <button onClick={save} className="btn-primary ml-1 py-1.5 px-3">
-            <Save size={13} /> Save
+            <Trash2 size={19} />
           </button>
         </div>
       </div>
 
-      {/* Title + Tags */}
-      <div className="px-6 pt-5 pb-3 border-b border-gray-100 dark:border-gray-800 shrink-0">
+      {/* ── Title ── */}
+      <div className="px-5 pt-2 pb-1 shrink-0">
         <input
           type="text"
           value={title}
           onChange={e => setTitle(e.target.value)}
-          placeholder="Untitled note"
-          className="w-full text-xl font-semibold text-gray-900 dark:text-gray-100 bg-transparent border-none outline-none placeholder-gray-300 dark:placeholder-gray-700 mb-3"
+          placeholder="Title"
+          className="w-full text-[26px] font-semibold bg-transparent border-none outline-none text-neutral-300 placeholder-neutral-700 leading-tight"
         />
+        {/* Meta */}
+        <p className="text-neutral-600 text-[12px] mt-1.5 mb-3">
+          {metaDate}&nbsp;&nbsp;|&nbsp;&nbsp;{charCount} characters
+        </p>
+        {/* Tags */}
         <TagInput tags={tags} onChange={setTags} />
       </div>
 
-      {/* Markdown toolbar (edit mode only) */}
-      {mode === 'edit' && (
-        <MarkdownToolbar
-          textareaRef={textareaRef}
-          value={content}
-          onChange={setContent}
-        />
+      {/* ── Mode tabs: Normal | Markdown ── */}
+      <div className="flex items-center gap-3 px-5 pt-3 pb-2 shrink-0">
+        <button
+          onClick={() => { setEditorMode('normal'); setPreview(false); }}
+          className={`text-sm font-medium pb-1 border-b-2 transition-colors ${
+            editorMode === 'normal'
+              ? 'text-white border-white'
+              : 'text-neutral-600 border-transparent hover:text-neutral-400'
+          }`}
+        >
+          Normal
+        </button>
+        <button
+          onClick={() => { setEditorMode('markdown'); setPreview(false); }}
+          className={`text-sm font-medium pb-1 border-b-2 transition-colors ${
+            editorMode === 'markdown'
+              ? 'text-white border-white'
+              : 'text-neutral-600 border-transparent hover:text-neutral-400'
+          }`}
+        >
+          Markdown
+        </button>
+        {editorMode === 'markdown' && (
+          <button
+            onClick={() => setPreview(p => !p)}
+            className={`ml-auto flex items-center gap-1 text-xs px-2.5 py-1 rounded-lg transition-colors ${
+              preview ? 'bg-neutral-700 text-white' : 'text-neutral-500 hover:text-neutral-300'
+            }`}
+          >
+            <Eye size={13} /> {preview ? 'Editing' : 'Preview'}
+          </button>
+        )}
+      </div>
+
+      {/* ── Markdown toolbar (only in markdown edit mode) ── */}
+      {editorMode === 'markdown' && !preview && (
+        <MarkdownToolbar textareaRef={textareaRef} value={content} onChange={setContent} />
       )}
 
-      {/* Content area */}
+      {/* ── Content area ── */}
       <div className="flex-1 overflow-hidden">
-        {mode === 'edit' ? (
+        {editorMode === 'markdown' && preview ? (
+          <MarkdownPreview content={content} />
+        ) : (
           <textarea
             ref={textareaRef}
             value={content}
             onChange={e => setContent(e.target.value)}
             onKeyDown={handleKeyDown}
-            placeholder={`Start writing...\n\nMarkdown supported:\n  **bold**  *italic*  \`code\`  # Heading\n  - list item\n  > blockquote`}
+            placeholder={editorMode === 'normal' ? 'Start typing' : 'Start typing (Markdown supported)'}
             spellCheck
-            className="w-full h-full resize-none px-6 py-4 bg-transparent text-gray-800 dark:text-gray-200 text-sm leading-relaxed outline-none placeholder-gray-300 dark:placeholder-gray-600 font-mono"
+            className={`w-full h-full resize-none px-5 py-3 bg-transparent text-neutral-200 text-[15px] leading-relaxed outline-none placeholder-neutral-700 ${
+              editorMode === 'markdown' ? 'font-mono' : ''
+            }`}
           />
-        ) : (
-          <MarkdownPreview content={content} />
         )}
       </div>
     </div>

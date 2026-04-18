@@ -15,11 +15,12 @@ const initialState = {
   searchQuery: '',
   activeTag: null,
   view: 'list',          // 'list' | 'editor' | 'vault' | 'settings'
-  theme: 'light',
+  bottomTab: 'notes',   // 'notes' | 'tasks'
+  theme: 'dark',
   vaultLocked: true,
   vaultPin: null,
   vaultPassword: 'vault-default-key',
-  syncStatus: 'idle',    // 'idle' | 'syncing' | 'done' | 'error'
+  syncStatus: 'idle',
   loading: true,
 };
 
@@ -36,6 +37,7 @@ function reducer(state, action) {
     case 'SET_VAULT_PIN': return { ...state, vaultPin: action.payload };
     case 'SET_SYNC_STATUS': return { ...state, syncStatus: action.payload };
     case 'SET_LOADING': return { ...state, loading: action.payload };
+    case 'SET_BOTTOM_TAB': return { ...state, bottomTab: action.payload };
     default: return state;
   }
 }
@@ -46,7 +48,7 @@ export function AppProvider({ children }) {
   // Boot
   useEffect(() => {
     (async () => {
-      const theme = await getSetting('theme', 'light');
+      const theme = await getSetting('theme', 'dark');
       const vaultPin = await getSetting('vaultPin', null);
       dispatch({ type: 'SET_THEME', payload: theme });
       dispatch({ type: 'SET_VAULT_PIN', payload: vaultPin });
@@ -57,6 +59,7 @@ export function AppProvider({ children }) {
   // Apply theme class
   useEffect(() => {
     document.documentElement.classList.toggle('dark', state.theme === 'dark');
+    document.documentElement.classList.toggle('light', state.theme === 'light');
   }, [state.theme]);
 
   const refreshNotes = useCallback(async () => {

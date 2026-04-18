@@ -16,20 +16,20 @@ export function TagInput({ tags = [], onChange }) {
   const remove = (tag) => onChange(tags.filter(t => t !== tag));
 
   return (
-    <div className="flex flex-wrap gap-1.5 items-center min-h-8 px-3 py-2 rounded-lg border border-gray-200 dark:border-gray-600 bg-white dark:bg-gray-800 focus-within:ring-2 focus-within:ring-blue-500">
-      <Tag size={13} className="text-gray-400 dark:text-gray-500 shrink-0" />
+    <div className="flex flex-wrap gap-1.5 items-center min-h-8">
+      <Tag size={12} className="text-neutral-700 shrink-0" />
       {tags.map(t => (
-        <span key={t} className="tag-badge">
+        <span key={t} className="inline-flex items-center gap-1 px-2 py-0.5 rounded-full text-xs bg-neutral-800 text-neutral-400">
           {t}
-          <button onClick={() => remove(t)} className="hover:text-blue-800 dark:hover:text-blue-200"><X size={11} /></button>
+          <button onClick={() => remove(t)} className="hover:text-white transition-colors"><X size={10} /></button>
         </span>
       ))}
       <input
         value={input}
         onChange={e => setInput(e.target.value)}
         onKeyDown={add}
-        placeholder={tags.length ? '' : 'Add tags...'}
-        className="flex-1 min-w-16 text-xs bg-transparent outline-none text-gray-700 dark:text-gray-300 placeholder-gray-400"
+        placeholder={tags.length ? '' : 'Add tags…'}
+        className="flex-1 min-w-16 text-xs bg-transparent outline-none text-neutral-500 placeholder-neutral-700"
       />
     </div>
   );

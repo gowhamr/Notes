@@ -9,17 +9,16 @@ export function Modal({ isOpen, onClose, title, children, size = 'md' }) {
   }, [isOpen]);
 
   if (!isOpen) return null;
-
-  const sizes = { sm: 'max-w-sm', md: 'max-w-md', lg: 'max-w-lg', xl: 'max-w-xl' };
+  const sizes = { sm: 'max-w-sm', md: 'max-w-md', lg: 'max-w-lg' };
 
   return (
-    <div className="fixed inset-0 z-50 flex items-center justify-center p-4">
-      <div className="absolute inset-0 bg-black/40 backdrop-blur-sm" onClick={onClose} />
-      <div className={`relative w-full ${sizes[size]} bg-white dark:bg-gray-800 rounded-2xl shadow-2xl animate-scale-in`}>
+    <div className="fixed inset-0 z-50 flex items-end sm:items-center justify-center p-4 sm:p-6">
+      <div className="absolute inset-0 bg-black/70 backdrop-blur-sm" onClick={onClose} />
+      <div className={`relative w-full ${sizes[size]} bg-neutral-900 border border-neutral-700 rounded-3xl shadow-2xl animate-slide-up`}>
         {title && (
-          <div className="flex items-center justify-between px-6 py-4 border-b border-gray-100 dark:border-gray-700">
-            <h2 className="text-base font-semibold text-gray-900 dark:text-gray-100">{title}</h2>
-            <button onClick={onClose} className="p-1.5 rounded-lg hover:bg-gray-100 dark:hover:bg-gray-700 text-gray-500 dark:text-gray-400 transition-colors">
+          <div className="flex items-center justify-between px-6 py-4 border-b border-neutral-800">
+            <h2 className="text-sm font-semibold text-white">{title}</h2>
+            <button onClick={onClose} className="p-1.5 rounded-lg hover:bg-neutral-800 text-neutral-500 transition-colors">
               <X size={16} />
             </button>
           </div>

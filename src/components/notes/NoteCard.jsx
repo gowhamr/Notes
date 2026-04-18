@@ -16,8 +16,8 @@ export function NoteCard({ note }) {
 
   const onContextMenu = (e) => {
     e.preventDefault();
-    const x = Math.min(e.clientX, window.innerWidth - 200);
-    const y = Math.min(e.clientY, window.innerHeight - 200);
+    const x = Math.min(e.clientX, window.innerWidth - 192);
+    const y = Math.min(e.clientY, window.innerHeight - 180);
     setMenu({ x, y });
   };
 
@@ -42,47 +42,62 @@ export function NoteCard({ note }) {
       label: 'Delete',
       icon: <Trash2 size={14} />,
       danger: true,
-      action: () => { removeNote(note.id); toast('Note deleted', 'info'); },
+      action: () => { removeNote(note.id); toast('Deleted', 'info'); },
     },
   ];
 
-  const preview = (note.content || '').slice(0, 140);
+  // Plain text preview
+  const preview = (note.content || '').slice(0, 120);
+
+  // Format date like MI Notes: "Feb 3, 2025" or "Apr 17 6:52 PM"
+  const ts = note.updatedAt || note.createdAt;
+  const now = Date.now();
+  const diffDays = Math.floor((now - ts) / 86400000);
+  const dateStr = diffDays === 0
+    ? format(ts, 'MMM d h:mm aa')
+    : diffDays < 365
+    ? format(ts, 'MMM d')
+    : format(ts, 'MMM d, yyyy');
 
   return (
     <>
       <div
-        className={`note-card ${note.isPinned ? 'pinned' : ''} ${isActive ? 'ring-2 ring-blue-500' : ''}`}
+        className={`note-card group ${note.isPinned ? 'pinned' : ''} ${isActive ? 'active-card' : ''}`}
         onClick={open}
         onContextMenu={onContextMenu}
       >
-        <div className="flex items-start justify-between gap-2 mb-1.5">
-          <h3 className="font-medium text-gray-900 dark:text-gray-100 text-sm truncate flex-1">
-            {note.title || <span className="text-gray-400 italic">Untitled</span>}
+        {/* Title row */}
+        <div className="flex items-start justify-between gap-2 mb-1">
+          <h3 className="font-semibold text-white text-[15px] leading-snug truncate flex-1">
+            {note.title || <span className="text-neutral-600 font-normal">Untitled</span>}
           </h3>
-          <div className="flex items-center gap-1 shrink-0">
-            {note.isPinned && <Pin size={11} className="text-yellow-500 fill-yellow-500" />}
-            <button
-              onClick={(e) => { e.stopPropagation(); onContextMenu(e); }}
-              className="p-0.5 rounded hover:bg-gray-100 dark:hover:bg-gray-700 text-gray-400 opacity-0 group-hover:opacity-100 transition-opacity"
-            >
-              <MoreVertical size={13} />
-            </button>
-          </div>
+          <button
+            onClick={e => { e.stopPropagation(); onContextMenu(e); }}
+            className="p-0.5 rounded text-neutral-700 opacity-0 group-hover:opacity-100 transition-opacity shrink-0 mt-0.5"
+          >
+            <MoreVertical size={14} />
+          </button>
         </div>
-        {preview && (
-          <p className="text-xs text-gray-500 dark:text-gray-400 line-clamp-2 mb-2 leading-relaxed">{preview}</p>
-        )}
+
+        {/* Preview */}
+        <p className="text-neutral-500 text-[13px] leading-snug line-clamp-1 mb-2.5">
+          {preview || <span className="italic">No text</span>}
+        </p>
+
+        {/* Footer: date + pin */}
         <div className="flex items-center justify-between gap-2">
-          <div className="flex flex-wrap gap-1">
-            {(note.tags || []).slice(0, 3).map(t => (
+          <span className="text-neutral-600 text-[12px]">{dateStr}</span>
+          <div className="flex items-center gap-1.5">
+            {(note.tags || []).slice(0, 2).map(t => (
               <span key={t} className="tag-badge">{t}</span>
             ))}
+            {note.isPinned && (
+              <Pin size={13} className="text-amber-400 fill-amber-400" />
+            )}
           </div>
-          <span className="text-[10px] text-gray-400 dark:text-gray-600 shrink-0">
-            {format(note.updatedAt || note.createdAt, 'MMM d')}
-          </span>
         </div>
       </div>
+
       <ContextMenu items={menuItems} position={menu} onClose={() => setMenu(null)} />
     </>
   );
