@@ -46,11 +46,7 @@ export function NoteCard({ note }) {
     },
   ];
 
-  const preview = (note.content || '')
-    .replace(/#{1,6}\s/g, '')
-    .replace(/[*_`~]/g, '')
-    .replace(/\[([^\]]+)\]\([^)]+\)/g, '$1')
-    .slice(0, 120);
+  const preview = (note.content || '').slice(0, 140);
 
   return (
     <>

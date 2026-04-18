@@ -51,36 +51,7 @@
   }
 }
 
-/* MD Editor overrides */
-.w-md-editor {
-  background: transparent !important;
-  border: none !important;
-  box-shadow: none !important;
-}
-.w-md-editor-toolbar {
-  @apply border-b border-gray-200 dark:border-gray-700 bg-gray-50 dark:bg-gray-800/50 !important;
-  border-radius: 0 !important;
-  padding: 6px 8px !important;
-}
-.w-md-editor-content {
-  background: transparent !important;
-}
-.w-md-editor-text-textarea,
-.w-md-editor-text-pre > code,
-.w-md-editor-text {
-  font-size: 15px !important;
-  line-height: 1.7 !important;
-}
-.dark .w-md-editor {
-  color: #e5e7eb !important;
-}
-.dark .w-md-editor-toolbar {
-  border-color: #374151 !important;
-}
-.dark .w-md-editor-toolbar li button {
-  color: #9ca3af !important;
-}
-.dark .w-md-editor-toolbar li button:hover {
-  color: #e5e7eb !important;
-  background: #374151 !important;
-}
+/* Editor textarea scrollbar */
+textarea::-webkit-scrollbar { width: 4px; }
+textarea::-webkit-scrollbar-track { background: transparent; }
+textarea::-webkit-scrollbar-thumb { @apply bg-gray-200 dark:bg-gray-700 rounded-full; }
